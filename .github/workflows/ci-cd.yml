@@ -3,35 +3,36 @@ name: CI/CD Pipeline
 on:
   push:
     branches:
-      - main
+      - main      # Trigger when code is pushed to main branch
+      - develop   # Also trigger when code is pushed to develop branch (if you want)
+  pull_request:
+    branches:
+      - main      # Trigger on pull requests to the main branch
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest  # You can change this based on the environment you need
 
     steps:
-      # Checkout the code
-      - name: Checkout Code
-        uses: actions/checkout@v3
+    - name: Checkout code
+      uses: actions/checkout@v2  # Checkout the code from the repository
 
-      # Set up Docker
-      - name: Set up Docker
-        uses: docker/setup-buildx-action@v2
+    - name: Set up Python 3.8
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.8'  # Change the version if needed (e.g., 3.9, 3.7)
 
-      # Build Docker image
-      - name: Build Docker Image
-        run: |
-          docker build -t flask-app .
+    - name: Install dependencies
+      run: |
+        pip install -r requirements.txt  # Ensure your dependencies are listed in this file
 
-      # Log in to Docker Hub
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+    - name: Run tests
+      run: |
+        pytest  # Or any other test framework you are using
 
-      # Push Docker image to Docker Hub
-      - name: Push Docker Image
-        run: |
-          docker tag flask-app <your-dockerhub-username>/flask-app:latest
-          docker push <your-dockerhub-username>/flask-app:latest
+    - name: Deploy to production
+      if: github.ref == 'refs/heads/main'  # Only deploy if it’s the main branch
+      run: |
+        echo "Deploying to production..."  # Replace this with your actual deployment script
+        # Add actual deployment commands here (e.g., to AWS, Azure, etc.)
+
